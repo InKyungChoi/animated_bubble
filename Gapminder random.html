@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+
+  <head>
+    <title> Gap minder</title>
+  </head>
+
+    
+    
+ <!-- <script src="d3\d3.min.js"></script>
+-->
+  <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+
+  <body >
+
+    <div id = "SVG"> </div>
+
+  <script>
+
+    // DATA
+
+var width= 1100, 
+	height = 600, 
+    margin_top = 20,
+    margin_bottom = 150,
+    margin_left = 70,
+    margin_right = 50,
+    stroke_width = 2,
+    circle_r = 4,
+    bar_width = 40,
+    bar_color = "#DC403B",
+    font_family = "Helvetica",
+    label_font_size = 13,
+    note_font_size = 9,
+    chart_width = width - margin_left - margin_right,
+    chart_height = height - margin_top - margin_bottom,
+    legend_font_size = 13,
+    legend_rect_width = 10,
+    color_excel = {blue: "#447aba", red: "#bb423f", green: "#9dbc5c", purple: "#71588f", cyan: "#4198af",
+        orange: "#db843d", navy: "#2c4d75", burgandy: "#772c2a", darkgreen: "#5f7530", darkpurple: "#4d3b62", darkcyan: "#276a7c",
+         brightorange: "#FF9100", other: "#998675"};
+
+
+
+var duration = 1500;
+
+
+    var country = ["Algeria", "Angola" ,  "Benin",  "Botswana", "Burkina Faso"  ,"Burundi", "Cameroon", "Cape Verde",  "CAR", "Chad" ,"Comoros" ,"Congo" , "Cote d'Ivoire" , "DRC", "Djibouti" ,"Egypt" , "Equatorial Guinea", "Eritrea"],
+      color = [color_excel["red"], color_excel["blue"] , color_excel["blue"] , color_excel["blue"] , color_excel["blue"]   ,color_excel["blue"] , color_excel["blue"] , color_excel["red"],  color_excel["blue"] , color_excel["red"] ,color_excel["blue"]  ,color_excel["blue"]  , color_excel["red"] , color_excel["red"] , color_excel["red"] ,color_excel["blue"] , color_excel["blue"] , color_excel["blue"] ],
+      y_extent = [0,400],
+      x_extent = [0,250],
+      r_extent = [0, 100]
+
+    var year = [2000,2001,2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012]
+    var data_raw = [];
+    for (var i=0; i<year.length; i++){
+      for (var j = 0; j< country.length; j++){
+        data_raw.push({t: year[i], country: country[j], x: x_extent[1]*Math.random(), y:  y_extent[1]*Math.random(), r:  r_extent[1]*Math.random(), color: color[j] })
+      }
+    }
+
+
+    // DEFINE FUNCTIONS
+    var ft_x = d3.scale.linear().domain(x_extent).range([0, chart_width]),
+    ft_y = d3.scale.linear().domain(y_extent).range([chart_height, 0]),
+    ft_r = d3.scale.linear().domain(r_extent).range([5,  40]);
+
+    var ft_y_axis = d3.svg.axis().scale(ft_y).orient("left").ticks(5).innerTickSize(-chart_width).outerTickSize(3).tickPadding(10), 
+    ft_x_axis = d3.svg.axis().scale(ft_x).orient("bottom").ticks(5).innerTickSize(-chart_height).outerTickSize(3).tickPadding(10);
+
+
+    // APPEND SVG TO HTML ELEMENT
+    var svg = d3.select("#SVG").append("svg")
+        .attr("width", width)
+        .attr("height",height)
+        .append("g")
+        .attr("transform", "translate(" + margin_left  + "," + margin_top + ")")
+      .attr("font-family", font_family);
+    
+
+    svg.append("rect")
+      .attr("width", chart_width)
+      .attr("height", chart_height)
+      .attr("fill", "lightgray")
+      .attr("fill-opacity", 0.3)
+
+
+    svg.append("g")
+        .attr("id", "yaxis")
+        .call(ft_y_axis)
+      .append("text")
+      .attr("transform", "rotate(-90," + (-50) + "," + chart_height/2 + ")")
+      .attr("x", -50)
+      .attr("y", chart_height/2)
+      .text("Variable Y")
+      .attr("text-anchor", "middle")
+      .attr("font-size", label_font_size)
+    
+    d3.selectAll("#yaxis path").attr("fill", "none").attr("shape-rendering", "crispEdges").attr("stroke-width",1).attr("stroke","grey")
+    d3.selectAll("#yaxis .tick line").attr("stroke-width",0.7).attr("stroke","grey").attr("stroke-dasharray", ("3,3"));
+
+    svg.append("g")
+      .attr("id", "xaxis")
+        .attr("transform", "translate(0," + chart_height + ")")
+        .call(ft_x_axis)      
+        .append("text")
+      .attr("x", chart_width/2)
+      .attr("y", label_font_size*4)
+      .text("Variable X")
+      .attr("text-anchor", "middle")
+      .attr("font-size", label_font_size)
+
+    d3.selectAll("#xaxis path").attr("fill", "none").attr("shape-rendering", "crispEdges").attr("stroke-width",1).attr("stroke","grey")
+    d3.selectAll("#xaxis .tick line").attr("stroke-width",0.7).attr("stroke","grey").attr("stroke-dasharray", ("3,3"));
+
+
+    var ft_x = d3.scale.linear().domain(x_extent).range([0, chart_width]),
+    ft_y = d3.scale.linear().domain(y_extent).range([chart_height, 0]),
+    ft_line = d3.svg.line().interpolate("linear")
+      .x(function(d) { return ft_x(d.x)  })
+      .y(function(d) { return ft_y(d.y) });
+
+   var data = country.map(function(d,i){ return { country: d, color: color[i], 
+    trace:ft_line(data_raw.filter(function(d2){ return d2.country == country[i]})),
+    start_x: data_raw.filter(function(d4){ return d4.country == country[i]})[0].x,
+    start_y: data_raw.filter(function(d4){ return d4.country == country[i]})[0].y }   } )
+
+   var data = country.map(function(d,i){ 
+    return {country: d, color: color[i], values: data_raw.filter(function(d4){ return (d4.country == d)}) }})
+   
+    svg.selectAll("circle")
+      .data(data_raw.filter(function(d){ return d.t == year[0]})).enter()
+      .append("circle")
+      .attr("class", "circles")
+      .attr("cx", function(d){ return ft_x(d.x)})
+      .attr("cy", function(d){ return ft_y(d.y)})
+      .attr("r", function(d){ return ft_r(d.r)})
+      .attr("fill", function(d){ return  d.color})
+      .attr("fill-opacity", 0.8)
+      .attr("stroke", "white")
+      .attr("stroke-width", 1)
+
+    svg.selectAll("text_country") 
+    .data(data_raw.filter(function(d){ return d.t == year[0]})).enter() 
+      .append("text")
+      .attr("id", function(d,i){ return "name"+i})
+      .attr("class", "names")
+      .attr("x", function(d){ return ft_x(d.x)})
+      .attr("y", function(d){ return ft_y(d.y)})
+      .text(function(d){ return d.country})
+      .attr("fill", "black")
+      .attr("font-size", 11)
+
+    svg.append("text").attr("id", "text_year")
+      .attr("x", chart_width-15).attr("y", chart_height-15).text(year[0]).attr("font-size", 100).attr("text-anchor", "end").attr("fill", "darkgrey").attr("fill-opacity", 0.8)
+
+
+    d3.selectAll(".circles").transition().duration(duration).attr("cx", function(d,i){ return ft_x(data[i].values[1].x)}).attr("cy", function(d,i){ return ft_y(data[i].values[1].y)}).attr("r", function(d,i){ return ft_r(data[i].values[1].r)})
+    .transition().duration(duration).attr("cx", function(d,i){ return ft_x(data[i].values[2].x)}).attr("cy", function(d,i){ return ft_y(data[i].values[2].y)}).attr("r", function(d,i){ return ft_r(data[i].values[2].r)})
+    .transition().duration(duration).attr("cx", function(d,i){ return ft_x(data[i].values[3].x)}).attr("cy", function(d,i){ return ft_y(data[i].values[3].y)}).attr("r", function(d,i){ return ft_r(data[i].values[3].r)})
+    .transition().duration(duration).attr("cx", function(d,i){ return ft_x(data[i].values[4].x)}).attr("cy", function(d,i){ return ft_y(data[i].values[4].y)}).attr("r", function(d,i){ return ft_r(data[i].values[4].r)})
+    .transition().duration(duration).attr("cx", function(d,i){ return ft_x(data[i].values[5].x)}).attr("cy", function(d,i){ return ft_y(data[i].values[5].y)}).attr("r", function(d,i){ return ft_r(data[i].values[5].r)})
+    .transition().duration(duration).attr("cx", function(d,i){ return ft_x(data[i].values[6].x)}).attr("cy", function(d,i){ return ft_y(data[i].values[6].y)}).attr("r", function(d,i){ return ft_r(data[i].values[6].r)})
+    .transition().duration(duration).attr("cx", function(d,i){ return ft_x(data[i].values[7].x)}).attr("cy", function(d,i){ return ft_y(data[i].values[7].y)}).attr("r", function(d,i){ return ft_r(data[i].values[7].r)})
+    .transition().duration(duration).attr("cx", function(d,i){ return ft_x(data[i].values[8].x)}).attr("cy", function(d,i){ return ft_y(data[i].values[8].y)}).attr("r", function(d,i){ return ft_r(data[i].values[8].r)})
+    .transition().duration(duration).attr("cx", function(d,i){ return ft_x(data[i].values[9].x)}).attr("cy", function(d,i){ return ft_y(data[i].values[9].y)}).attr("r", function(d,i){ return ft_r(data[i].values[9].r)})
+    .transition().duration(duration).attr("cx", function(d,i){ return ft_x(data[i].values[10].x)}).attr("cy", function(d,i){ return ft_y(data[i].values[10].y)}).attr("r", function(d,i){ return ft_r(data[i].values[10].r)})
+    .transition().duration(duration).attr("cx", function(d,i){ return ft_x(data[i].values[11].x)}).attr("cy", function(d,i){ return ft_y(data[i].values[11].y)}).attr("r", function(d,i){ return ft_r(data[i].values[11].r)})
+    .transition().duration(duration).attr("cx", function(d,i){ return ft_x(data[i].values[12].x)}).attr("cy", function(d,i){ return ft_y(data[i].values[12].y)}).attr("r", function(d,i){ return ft_r(data[i].values[12].r)})
+
+
+    d3.selectAll(".names").transition().duration(duration).attr("x", function(d,i){ return ft_x(data[i].values[1].x)}).attr("y", function(d,i){ return ft_y(data[i].values[1].y)})
+    .transition().duration(duration).attr("x", function(d,i){ return ft_x(data[i].values[2].x)}).attr("y", function(d,i){ return ft_y(data[i].values[2].y)})
+    .transition().duration(duration).attr("x", function(d,i){ return ft_x(data[i].values[3].x)}).attr("y", function(d,i){ return ft_y(data[i].values[3].y)})
+    .transition().duration(duration).attr("x", function(d,i){ return ft_x(data[i].values[4].x)}).attr("y", function(d,i){ return ft_y(data[i].values[4].y)})
+    .transition().duration(duration).attr("x", function(d,i){ return ft_x(data[i].values[5].x)}).attr("y", function(d,i){ return ft_y(data[i].values[5].y)})
+    .transition().duration(duration).attr("x", function(d,i){ return ft_x(data[i].values[6].x)}).attr("y", function(d,i){ return ft_y(data[i].values[6].y)})
+    .transition().duration(duration).attr("x", function(d,i){ return ft_x(data[i].values[7].x)}).attr("y", function(d,i){ return ft_y(data[i].values[7].y)})
+    .transition().duration(duration).attr("x", function(d,i){ return ft_x(data[i].values[8].x)}).attr("y", function(d,i){ return ft_y(data[i].values[8].y)})
+    .transition().duration(duration).attr("x", function(d,i){ return ft_x(data[i].values[9].x)}).attr("y", function(d,i){ return ft_y(data[i].values[9].y)})
+    .transition().duration(duration).attr("x", function(d,i){ return ft_x(data[i].values[10].x)}).attr("y", function(d,i){ return ft_y(data[i].values[10].y)})
+    .transition().duration(duration).attr("x", function(d,i){ return ft_x(data[i].values[11].x)}).attr("y", function(d,i){ return ft_y(data[i].values[11].y)})
+    .transition().duration(duration).attr("x", function(d,i){ return ft_x(data[i].values[12].x)}).attr("y", function(d,i){ return ft_y(data[i].values[12].y)})
+
+    d3.select("#text_year").transition().delay(duration).duration(duration).text(year[1]).transition().duration(duration).text(year[2]).transition().duration(duration).text(year[3]).transition().duration(duration).text(year[4]).transition().duration(duration).text(year[5])
+    .transition().duration(duration).text(year[6])
+    .transition().duration(duration).text(year[7])
+    .transition().duration(duration).text(year[8])
+    .transition().duration(duration).text(year[9])
+    .transition().duration(duration).text(year[10])
+    .transition().duration(duration).text(year[11])
+    .transition().duration(duration).text(year[12])
+
+
+
+  </script>
+
+
+</body>
+
+
+
+</html>
